@@ -1,0 +1,74 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../../node_modules/.prisma/client"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model Bloq {
+  id      String   @id @map("_id") @db.String
+  title   String
+  address String
+  lockers Locker[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Locker {
+  id         String   @id @map("_id") @db.String
+  bloq       Bloq     @relation(fields: [bloqId], references: [id])
+  bloqId     String   @db.String
+  status     LockerStatus   @default(CLOSED)
+  isOccupied Boolean  @default(false)
+  rents      Rent?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rent {
+  id         String     @id @map("_id") @db.String
+  locker     Locker     @relation(fields: [lockerId], references: [id])
+  lockerId   String     @db.String @unique
+  weight     Float
+  size       RentSize
+  status     RentStatus @default(CREATED)
+
+  createdAt    DateTime  @default(now())
+  droppedOffAt DateTime?
+  pickedUpAt   DateTime?
+  updatedAt    DateTime  @updatedAt
+}
+
+enum Status {
+  OPEN
+  CLOSED
+}
+
+enum RentSize {
+  XS
+  S
+  M
+  L
+  XL
+}
+
+enum RentStatus {
+  CREATED
+  WAITING_DROPOFF
+  WAITING_PICKUP
+  DELIVERED
+}
+
+enum LockerStatus {
+  OPEN
+  CLOSED
+}
